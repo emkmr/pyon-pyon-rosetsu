@@ -215,14 +215,6 @@ canvas {
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
 }
 
-.overlay-sound {
-  position: absolute;
-  left: 20px;
-  bottom: 16px;
-  font-size: 18px;
-  color: #2f2f2f;
-}
-
 .overlay-message {
   font-size: 32px;
   margin: 0;
@@ -320,18 +312,17 @@ canvas {
         </div>
         <div class="overlay-scene-ground">
           <div class="overlay-dog" aria-hidden="true"></div>
-          <div class="overlay-sound">🔈</div>
         </div>
       </div>
       <h1 class="overlay-message" id="overlay-message"></h1>
 
       <div class="overlay-score-panel" id="overlay-score-panel">
-        <span class="overlay-star">🍣</span>
+        <span class="overlay-star">♡</span>
         <div class="overlay-score-text">
           <span>Score</span>
           <span class="overlay-score-value" id="overlay-score-value">0</span>
         </div>
-        <span class="overlay-star">🍣</span>
+        <span class="overlay-star">♡</span>
       </div>
 
       <p class="overlay-subtext" id="overlay-subtext"></p>
@@ -857,6 +848,7 @@ function setOverlayState(state, scoreValue = 0) {
       if (videoEl) videoEl.pause();
     }
     openingMusic.pause();
+    if (soundBtn) soundBtn.style.display = 'none';
     overlayMessageEl.innerText = 'クゥ〜ン、、、';
     overlayMessageEl.style.display = 'block';
     overlaySubtextEl.innerText = '';
