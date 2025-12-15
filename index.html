@@ -332,6 +332,8 @@ const overlayScorePanel = document.getElementById('overlay-score-panel');
 const overlayScoreValue = document.getElementById('overlay-score-value');
 const overlaySubtextEl = document.getElementById('overlay-subtext');
 const startBtn = document.getElementById('start-btn');
+const openingMusic = new Audio('assets/opening-music.mp3');
+openingMusic.loop = true;
 
 const COLORS = {
   sky: '#FFD9E6',
@@ -807,6 +809,8 @@ function setOverlayState(state, scoreValue = 0) {
       const videoEl = overlayVideo.querySelector('video');
       if (videoEl && videoEl.paused) videoEl.play().catch(() => {});
     }
+    openingMusic.currentTime = 0;
+    openingMusic.play().catch(() => {});
     overlayMessageEl.innerText = '';
     overlayMessageEl.style.display = 'none';
     overlaySubtextEl.innerText = '';
@@ -820,6 +824,7 @@ function setOverlayState(state, scoreValue = 0) {
       const videoEl = overlayVideo.querySelector('video');
       if (videoEl) videoEl.pause();
     }
+    openingMusic.pause();
     overlayMessageEl.innerText = 'クゥ〜ン、、、';
     overlayMessageEl.style.display = 'block';
     overlaySubtextEl.innerText = '';
@@ -834,6 +839,8 @@ function init() {
   // ゲーム開始時: ここで画面サイズに合わせて定数を確定させる
   resize();
   calculateConstants();
+
+  openingMusic.pause();
 
   player.w = TILE_SIZE * 1.3;
   player.h = TILE_SIZE * 1.1;
