@@ -282,7 +282,7 @@ canvas {
           <div class="overlay-sound">🔈</div>
         </div>
       </div>
-      <h1 class="overlay-message" id="overlay-message">PYON PYON DOG</h1>
+      <h1 class="overlay-message" id="overlay-message"></h1>
 
       <div class="overlay-score-panel" id="overlay-score-panel">
         <span class="overlay-star">🍓</span>
@@ -782,7 +782,8 @@ let frameCount = 0;
 function setOverlayState(state, scoreValue = 0) {
   if (state === 'start') {
     overlayScene.style.display = 'block';
-    overlayMessageEl.innerText = 'PYON PYON DOG';
+    overlayMessageEl.innerText = '';
+    overlayMessageEl.style.display = 'none';
     overlaySubtextEl.innerText = '';
     overlaySubtextEl.style.display = 'none';
     overlayScorePanel.classList.remove('visible');
@@ -790,6 +791,7 @@ function setOverlayState(state, scoreValue = 0) {
   } else if (state === 'gameover') {
     overlayScene.style.display = 'none';
     overlayMessageEl.innerText = 'クゥーン...';
+    overlayMessageEl.style.display = 'block';
     overlaySubtextEl.innerText = '';
     overlaySubtextEl.style.display = 'none';
     overlayScoreValue.innerText = scoreValue;
