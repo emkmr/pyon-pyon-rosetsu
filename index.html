@@ -145,9 +145,30 @@ canvas {
   border-radius: 24px;
   border: 3px solid #1f2d40;
   overflow: hidden;
-  margin-bottom: 22px;
+  margin: 0 auto 22px;
+  width: min(320px, calc(100% - 40px));
   background: #8cc0f4;
   box-shadow: inset 0 0 0 2px rgba(0,0,0,0.05);
+}
+
+.overlay-video {
+  width: min(320px, calc(100% - 40px));
+  aspect-ratio: 16 / 9;
+  margin: 0 auto 20px;
+  background: #1f1b1a;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 3px solid #1f1b1a;
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.overlay-video video {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
 }
 
 .overlay-scene-sky {
@@ -159,17 +180,13 @@ canvas {
   gap: 12px;
 }
 
-.overlay-scene-moon {
-  font-size: 42px;
-  color: rgba(255,255,255,0.9);
-  align-self: flex-start;
-}
-
 .overlay-scene-text {
-  font-size: 16px;
+  font-size: 10px;
   color: rgba(34,34,34,0.7);
   letter-spacing: 0.1em;
   margin: 0;
+  width: min(320px, calc(100% - 40px));
+  text-align: center;
 }
 
 .overlay-hand {
@@ -192,8 +209,8 @@ canvas {
 }
 
 .overlay-dog {
-  width: 92px;
-  height: 92px;
+  width: 78px;
+  height: 78px;
   background: url('assets/pyon-pyon-rosetsu:assets:img:ui_reference_02.png') center/contain no-repeat;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
 }
@@ -263,9 +280,11 @@ canvas {
   <div id="start-screen">
     <div class="overlay-card">
       <p class="overlay-caption">ぴょんぴょんロセツ</p>
+      <div class="overlay-video" id="overlay-video">
+        <video src="assets/pyon-pyon-rosetsu:assets:img:ui_reference_01.mov" autoplay loop muted playsinline></video>
+      </div>
       <div class="overlay-scene" id="overlay-scene">
         <div class="overlay-scene-sky">
-          <span class="overlay-scene-moon">☾</span>
           <p class="overlay-scene-text">タップしてプレイ</p>
           <div class="overlay-hand">
             <svg viewBox="0 0 64 64" fill="none" stroke="#555" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -308,6 +327,7 @@ const ctx = canvas.getContext('2d');
 const startScreenEl = document.getElementById('start-screen');
 const overlayMessageEl = document.getElementById('overlay-message');
 const overlayScene = document.getElementById('overlay-scene');
+const overlayVideo = document.getElementById('overlay-video');
 const overlayScorePanel = document.getElementById('overlay-score-panel');
 const overlayScoreValue = document.getElementById('overlay-score-value');
 const overlaySubtextEl = document.getElementById('overlay-subtext');
@@ -782,6 +802,11 @@ let frameCount = 0;
 function setOverlayState(state, scoreValue = 0) {
   if (state === 'start') {
     overlayScene.style.display = 'block';
+    if (overlayVideo) {
+      overlayVideo.style.display = 'block';
+      const videoEl = overlayVideo.querySelector('video');
+      if (videoEl && videoEl.paused) videoEl.play().catch(() => {});
+    }
     overlayMessageEl.innerText = '';
     overlayMessageEl.style.display = 'none';
     overlaySubtextEl.innerText = '';
@@ -790,7 +815,12 @@ function setOverlayState(state, scoreValue = 0) {
     startBtn.innerText = 'START!!';
   } else if (state === 'gameover') {
     overlayScene.style.display = 'none';
-    overlayMessageEl.innerText = 'クゥーン...';
+    if (overlayVideo) {
+      overlayVideo.style.display = 'none';
+      const videoEl = overlayVideo.querySelector('video');
+      if (videoEl) videoEl.pause();
+    }
+    overlayMessageEl.innerText = '何を言っているのか分かりません';
     overlayMessageEl.style.display = 'block';
     overlaySubtextEl.innerText = '';
     overlaySubtextEl.style.display = 'none';
