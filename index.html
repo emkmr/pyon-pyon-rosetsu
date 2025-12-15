@@ -263,6 +263,28 @@ canvas {
   color: rgba(33, 33, 33, 0.8);
   margin-bottom: 20px;
 }
+
+.sound-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 999px;
+  border: 2px solid #1f1b1a;
+  background: #fff8dc;
+  color: #1f1b1a;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  font-family: inherit;
+  margin-bottom: 16px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.sound-btn:active {
+  transform: scale(0.97);
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.15);
+}
 </style>
 </head>
 
@@ -313,6 +335,7 @@ canvas {
       </div>
 
       <p class="overlay-subtext" id="overlay-subtext"></p>
+      <button class="sound-btn" id="sound-btn">🎶</button>
       <button class="start-btn" id="start-btn">PLAY GAME</button>
     </div>
   </div>
@@ -332,8 +355,10 @@ const overlayScorePanel = document.getElementById('overlay-score-panel');
 const overlayScoreValue = document.getElementById('overlay-score-value');
 const overlaySubtextEl = document.getElementById('overlay-subtext');
 const startBtn = document.getElementById('start-btn');
+const soundBtn = document.getElementById('sound-btn');
 const openingMusic = new Audio('assets/opening-music.mp3');
 openingMusic.loop = true;
+let musicUnlocked = false;
 
 const COLORS = {
   sky: '#FFD9E6',
@@ -809,8 +834,15 @@ function setOverlayState(state, scoreValue = 0) {
       const videoEl = overlayVideo.querySelector('video');
       if (videoEl && videoEl.paused) videoEl.play().catch(() => {});
     }
-    openingMusic.currentTime = 0;
-    openingMusic.play().catch(() => {});
+    if (musicUnlocked) {
+      openingMusic.currentTime = 0;
+      openingMusic.play().catch(() => {});
+      if (soundBtn) soundBtn.style.display = 'none';
+    } else if (soundBtn) {
+      soundBtn.style.display = 'inline-flex';
+      openingMusic.pause();
+      openingMusic.currentTime = 0;
+    }
     overlayMessageEl.innerText = '';
     overlayMessageEl.style.display = 'none';
     overlaySubtextEl.innerText = '';
@@ -1007,6 +1039,15 @@ function gameLoop() {
 // ボタンイベント: クリックとタッチ両方に対応
 startBtn.addEventListener('click', (e) => { e.preventDefault(); init(); });
 startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); init(); });
+if (soundBtn) {
+  soundBtn.addEventListener('click', () => {
+    openingMusic.currentTime = 0;
+    openingMusic.play().then(() => {
+      musicUnlocked = true;
+      soundBtn.style.display = 'none';
+    }).catch(() => {});
+  });
+}
 setOverlayState('start');
 
 const container = document.getElementById('game-container');
