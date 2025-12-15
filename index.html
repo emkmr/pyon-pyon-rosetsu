@@ -512,54 +512,65 @@ function drawBlock(ctx, x, y, type) {
     ctx.fillStyle = COLORS.groundDark;
     ctx.fillRect(x, y + TILE_SIZE - 4, TILE_SIZE, 4);
   } else if (type === 2) { // Sushi treat
-    const cx = x + TILE_SIZE / 2;
-    const cy = y + TILE_SIZE / 2;
-    const s = TILE_SIZE * 0.85;
+    const sushiW = TILE_SIZE * 0.8;
+    const riceH = TILE_SIZE * 0.35;
+    const fishH = TILE_SIZE * 0.25;
+    const baseX = x + TILE_SIZE * 0.1;
+    const riceY = y + TILE_SIZE * 0.45;
+    const fishY = y + TILE_SIZE * 0.18;
+    const radius = riceH * 0.5;
 
     ctx.save();
-    ctx.translate(cx, cy);
+    ctx.shadowColor = 'rgba(0,0,0,0.2)';
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 3;
 
-    ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.ellipse(0, s * 0.15, s * 0.4, s * 0.25, 0, 0, Math.PI * 2);
+    ctx.moveTo(baseX + radius, riceY);
+    ctx.lineTo(baseX + sushiW - radius, riceY);
+    ctx.quadraticCurveTo(baseX + sushiW, riceY, baseX + sushiW, riceY + radius);
+    ctx.lineTo(baseX + sushiW, riceY + riceH - radius);
+    ctx.quadraticCurveTo(baseX + sushiW, riceY + riceH, baseX + sushiW - radius, riceY + riceH);
+    ctx.lineTo(baseX + radius, riceY + riceH);
+    ctx.quadraticCurveTo(baseX, riceY + riceH, baseX, riceY + riceH - radius);
+    ctx.lineTo(baseX, riceY + radius);
+    ctx.quadraticCurveTo(baseX, riceY, baseX + radius, riceY);
+    ctx.closePath();
+    ctx.fillStyle = '#fffdf5';
     ctx.fill();
-
-    ctx.fillStyle = '#EEEEEE';
-    ctx.fillRect(-s * 0.2, s * 0.2, s * 0.05, s * 0.05);
-    ctx.fillRect(s * 0.1, s * 0.3, s * 0.05, s * 0.05);
-
-    ctx.fillStyle = '#FF8A65';
-    ctx.beginPath();
-    ctx.ellipse(0, -s * 0.05, s * 0.42, s * 0.25, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.strokeStyle = '#FFAB91';
-    ctx.lineWidth = s * 0.05;
-    ctx.beginPath();
-    ctx.moveTo(-s * 0.2, -s * 0.2); ctx.lineTo(-s * 0.1, 0);
-    ctx.moveTo(0, -s * 0.25); ctx.lineTo(s * 0.1, -s * 0.05);
-    ctx.moveTo(s * 0.2, -s * 0.2); ctx.lineTo(s * 0.3, 0);
+    ctx.strokeStyle = '#e5ddd2';
+    ctx.lineWidth = Math.max(1, TILE_SIZE * 0.04);
     ctx.stroke();
 
-    ctx.fillStyle = '#212121';
-    ctx.fillRect(-s * 0.1, -s * 0.25, s * 0.2, s * 0.55);
+    ctx.fillStyle = '#1f3b2d';
+    ctx.fillRect(baseX + sushiW * 0.35, fishY - fishH * 0.15, sushiW * 0.3, riceH + fishH * 1.1);
 
-    ctx.strokeStyle = '#3E2723';
-    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.ellipse(0, 0, s * 0.42, s * 0.35, 0, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.moveTo(baseX + riceH * 0.6, fishY);
+    ctx.lineTo(baseX + sushiW - riceH * 0.6, fishY);
+    ctx.quadraticCurveTo(baseX + sushiW, fishY + fishH * 0.5, baseX + sushiW - riceH * 0.4, fishY + fishH);
+    ctx.lineTo(baseX + riceH * 0.4, fishY + fishH);
+    ctx.quadraticCurveTo(baseX, fishY + fishH * 0.5, baseX + riceH * 0.6, fishY);
+    ctx.closePath();
+    ctx.fillStyle = '#ff6b6b';
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = Math.max(1, TILE_SIZE * 0.025);
+    for (let i = 0; i < 3; i++) {
+      const stripeX = baseX + sushiW * (0.25 + i * 0.2);
+      ctx.beginPath();
+      ctx.moveTo(stripeX, fishY + fishH * 0.15);
+      ctx.lineTo(stripeX - TILE_SIZE * 0.1, fishY + fishH * 0.85);
+      ctx.stroke();
+    }
 
     ctx.restore();
   } else if (type === 3) { // Pipe
-    ctx.fillStyle = '#D32F2F';
-    ctx.fillRect(x + TILE_SIZE * 0.2, y + TILE_SIZE * 0.2, TILE_SIZE * 0.6, TILE_SIZE * 0.8);
-    ctx.beginPath();
-    ctx.arc(x + TILE_SIZE * 0.5, y + TILE_SIZE * 0.2, TILE_SIZE * 0.3, Math.PI, 0);
-    ctx.fill();
-    ctx.fillStyle = '#B71C1C';
-    ctx.fillRect(x + TILE_SIZE * 0.1, y + TILE_SIZE * 0.3, TILE_SIZE * 0.15, TILE_SIZE * 0.15);
-    ctx.fillRect(x + TILE_SIZE * 0.75, y + TILE_SIZE * 0.3, TILE_SIZE * 0.15, TILE_SIZE * 0.15);
+    ctx.fillStyle = COLORS.pipe;
+    ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+    ctx.fillStyle = COLORS.pipeDark;
+    ctx.fillRect(x + TILE_SIZE*0.1, y, TILE_SIZE*0.2, TILE_SIZE);
   }
 }
 
