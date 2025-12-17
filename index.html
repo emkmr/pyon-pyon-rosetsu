@@ -326,7 +326,7 @@ canvas {
       </div>
 
       <p class="overlay-subtext" id="overlay-subtext"></p>
-      <button class="sound-btn" id="sound-btn">🎶</button>
+      <button class="sound-btn" id="sound-btn">サウンドON</button>
       <button class="start-btn" id="start-btn">PLAY GAME</button>
     </div>
   </div>
@@ -347,6 +347,8 @@ const overlayScoreValue = document.getElementById('overlay-score-value');
 const overlaySubtextEl = document.getElementById('overlay-subtext');
 const startBtn = document.getElementById('start-btn');
 const soundBtn = document.getElementById('sound-btn');
+const scoreEl = document.getElementById('score');
+const distEl = document.getElementById('dist');
 const openingMusic = new Audio('assets/opening-music.mp3');
 openingMusic.loop = true;
 let musicUnlocked = false;
@@ -360,6 +362,8 @@ const COLORS = {
   pipeDark: '#C71585',
   text: '#333333'
 };
+
+const INVINCIBLE_DURATION_FRAMES = 60 * 5;
 
 // ★ マップの縦マス数（y=0..14 と一致）
 const ROWS = 15;
@@ -436,6 +440,29 @@ function drawPlayer(ctx, x, y, frame) {
   const drawH = player.h * 1.2;
   const centerX = x + player.w / 2;
   const bottomY = y + player.h;
+
+  if (player.invincible) {
+    ctx.save();
+    ctx.translate(centerX, y + player.h * 0.5);
+    const pulse = 16 + Math.sin(frame / 5) * 8;
+    const auraW = player.w * 2.2 + pulse;
+    const auraH = player.h * 2.2 + pulse;
+    const maxR = Math.max(auraW, auraH);
+    const grad = ctx.createRadialGradient(0, 0, player.w * 0.2, 0, 0, maxR);
+    const hueOffset = (frame * 5) % 360;
+    const rainbow = [0, 45, 90, 150, 210, 270, 330];
+    rainbow.forEach((hue, idx) => {
+      const stop = idx / (rainbow.length - 1);
+      const alpha = 0.55 - stop * 0.4;
+      grad.addColorStop(stop, `hsla(${(hue + hueOffset) % 360}, 85%, 70%, ${Math.max(alpha, 0)})`);
+    });
+    grad.addColorStop(1, 'hsla(0, 0%, 100%, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, auraW, auraH, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 
   ctx.save();
   ctx.translate(centerX, bottomY);
@@ -642,6 +669,77 @@ function drawEnemy(ctx, x, y, frame) {
   }
 }
 
+function getEbiFlyY(ebi) {
+  return ebi.baseY;
+}
+
+function drawEbiFly(ctx, x, y, frame) {
+  const bodyLen = TILE_SIZE * 1.15;
+  const bodyThick = TILE_SIZE * 0.38;
+  const tailWidth = TILE_SIZE * 0.35;
+  const tailHeight = TILE_SIZE * 0.32;
+  const pixel = TILE_SIZE * 0.08;
+  const wingFlap = Math.sin(frame * 0.4) * Math.PI / 32;
+
+  ctx.save();
+  ctx.translate(x, y);
+
+  const drawWing = (offsetX, offsetY, flip) => {
+    ctx.save();
+    ctx.translate(offsetX, offsetY);
+    ctx.rotate(flip * (Math.PI / 3.2 + wingFlap));
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.quadraticCurveTo(flip * bodyLen * 0.3, -bodyThick * 0.45, flip * bodyLen * 0.4, -bodyThick * 0.1);
+    ctx.quadraticCurveTo(flip * bodyLen * 0.3, bodyThick * 0.3, 0, 0);
+    ctx.fill();
+    ctx.restore();
+  };
+  drawWing(0, -bodyThick * 0.45, -1);
+  drawWing(bodyLen * 0.1, -bodyThick * 0.4, 1);
+
+  ctx.fillStyle = '#f2a645';
+  ctx.strokeStyle = '#a05f22';
+  ctx.lineWidth = TILE_SIZE * 0.04;
+  ctx.beginPath();
+  ctx.moveTo(-bodyLen * 0.5, -bodyThick * 0.5);
+  ctx.quadraticCurveTo(bodyLen * 0.2, -bodyThick * 0.6, bodyLen * 0.45, -bodyThick * 0.08);
+  ctx.quadraticCurveTo(bodyLen * 0.38, bodyThick * 0.4, -bodyLen * 0.45, bodyThick * 0.55);
+  ctx.quadraticCurveTo(-bodyLen * 0.55, bodyThick * 0.2, -bodyLen * 0.5, -bodyThick * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#f8c977';
+  for (let row = -2; row <= 2; row++) {
+    for (let col = -2; col <= 3; col++) {
+      if ((row + col) % 2 === 0) {
+        ctx.fillRect(-bodyLen * 0.35 + col * pixel * 0.9, row * pixel * 0.9, pixel, pixel);
+      }
+    }
+  }
+
+  ctx.fillStyle = '#c86a2d';
+  ctx.strokeStyle = '#7a3a14';
+  ctx.beginPath();
+  ctx.moveTo(bodyLen * 0.45, -tailHeight * 0.3);
+  ctx.lineTo(bodyLen * 0.58, -tailHeight * 0.65);
+  ctx.lineTo(bodyLen * 0.62, -tailHeight * 0.15);
+  ctx.lineTo(bodyLen * 0.72, -tailHeight * 0.6);
+  ctx.lineTo(bodyLen * 0.78, -tailHeight * 0.15);
+  ctx.lineTo(bodyLen * 0.78, tailHeight * 0.15);
+  ctx.lineTo(bodyLen * 0.72, tailHeight * 0.6);
+  ctx.lineTo(bodyLen * 0.62, tailHeight * 0.15);
+  ctx.lineTo(bodyLen * 0.58, tailHeight * 0.65);
+  ctx.lineTo(bodyLen * 0.45, tailHeight * 0.3);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 function drawBackground(ctx) {
   ctx.fillStyle = COLORS.sky;
   ctx.fillRect(0, 0, view.w, view.h);
@@ -673,6 +771,7 @@ class Level {
   constructor() {
     this.map = {};
     this.enemies = [];
+    this.ebiFlies = [];
     this.generatedX = 0;
     this.groundY = 10;
     this.gapCooldown = 0;
@@ -695,6 +794,7 @@ class Level {
     // クリーンアップ
     const deleteThreshold = Math.floor((gameState.cameraX - view.w) / TILE_SIZE);
     this.enemies = this.enemies.filter(e => e.x > gameState.cameraX - view.w);
+    this.ebiFlies = this.ebiFlies.filter(e => !e.collected && e.x > gameState.cameraX - view.w * 1.2);
 
     // 古いマップデータの削除（軽量化）
     if (this.generatedX % 100 === 0) {
@@ -777,6 +877,19 @@ class Level {
         active: true
       });
     }
+
+    if (Math.random() < 0.015) {
+      const ebx = x * TILE_SIZE + view.w + TILE_SIZE * 2;
+      const eby = Math.max(2, groundY - 6) * TILE_SIZE;
+      this.ebiFlies.push({
+        x: ebx,
+        baseY: eby,
+        amplitude: 0,
+        phase: 0,
+        speed: TILE_SIZE * (0.08 + Math.random() * 0.04),
+        collected: false
+      });
+    }
   }
 
   draw(ctx, frame) {
@@ -799,6 +912,14 @@ class Level {
         drawEnemy(ctx, e.x - gameState.cameraX, e.y, frame);
       }
     });
+
+    this.ebiFlies.forEach(ebi => {
+      if (ebi.collected) return;
+      const screenX = ebi.x - gameState.cameraX;
+      if (screenX < -TILE_SIZE || screenX > view.w + TILE_SIZE) return;
+      const renderY = getEbiFlyY(ebi);
+      drawEbiFly(ctx, screenX, renderY, frame);
+    });
   }
 
   isSolid(x, y) {
@@ -810,7 +931,7 @@ class Level {
 }
 
 let player = {
-  x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0, grounded: false, dead: false
+  x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0, grounded: false, dead: false, invincible: false, invincibleTimer: 0
 };
 
 let level;
@@ -873,6 +994,8 @@ function init() {
   player.vx = MOVE_SPEED;
   player.vy = 0;
   player.dead = false;
+  player.invincible = false;
+  player.invincibleTimer = 0;
 
   level = new Level();
   gameState.score = 0;
@@ -904,13 +1027,27 @@ function updatePhysics() {
     jumpPressed = false;
   }
 
-  player.vy += GRAVITY;
+  player.vy += player.invincible ? GRAVITY * 0.2 : GRAVITY;
   const prevX = player.x;
   player.x += player.vx;
   player.y += player.vy;
 
+  level.ebiFlies.forEach(ebi => {
+    if (!ebi.collected) {
+      ebi.x -= ebi.speed;
+    }
+  });
+
+  if (player.invincibleTimer > 0) {
+    player.invincibleTimer--;
+    if (player.invincibleTimer <= 0) {
+      player.invincibleTimer = 0;
+      player.invincible = false;
+    }
+  }
+
   gameState.distance = Math.floor(player.x / TILE_SIZE);
-  document.getElementById('dist').innerText = `${gameState.distance}`;
+  distEl.innerText = `${gameState.distance}`;
 
   player.grounded = false;
 
@@ -954,7 +1091,7 @@ function updatePhysics() {
     if (type === 2) {
       column[tile.y] = 0;
       gameState.score += 50;
-      document.getElementById('score').innerText = `SCORE: ${gameState.score}`;
+      scoreEl.innerText = `SCORE: ${gameState.score}`;
       return false;
     }
 
@@ -973,8 +1110,27 @@ function updatePhysics() {
     die();
   }
 
+  level.ebiFlies = level.ebiFlies.filter(ebi => {
+    if (ebi.collected) return false;
+    const ebiY = getEbiFlyY(ebi);
+    const half = TILE_SIZE * 0.45;
+    if (player.x < ebi.x + half &&
+        player.x + player.w > ebi.x - half &&
+        player.y < ebiY + half &&
+        player.y + player.h > ebiY - half) {
+      ebi.collected = true;
+      player.invincible = true;
+      player.invincibleTimer = INVINCIBLE_DURATION_FRAMES;
+      gameState.score += 150;
+      scoreEl.innerText = `SCORE: ${gameState.score}`;
+      return false;
+    }
+    if (ebi.x < gameState.cameraX - TILE_SIZE * 2) return false;
+    return true;
+  });
+
   // 落下死
-  if (player.y > view.h + 100) die();
+  if (!player.invincible && player.y > view.h + 100) die();
 
   // カメラ追従
   const targetCamX = player.x - view.w * 0.2;
@@ -990,11 +1146,15 @@ function updatePhysics() {
         player.y < e.y + TILE_SIZE &&
         player.y + player.h > e.y) {
 
-      if (player.vy > 0 && player.y + player.h < e.y + TILE_SIZE * 0.6) {
+      if (player.invincible) {
+        e.active = false;
+        gameState.score += 120;
+        scoreEl.innerText = `SCORE: ${gameState.score}`;
+      } else if (player.vy > 0 && player.y + player.h < e.y + TILE_SIZE * 0.6) {
         e.active = false;
         player.vy = JUMP_FORCE * 0.6;
         gameState.score += 100;
-        document.getElementById('score').innerText = `SCORE: ${gameState.score}`;
+        scoreEl.innerText = `SCORE: ${gameState.score}`;
       } else {
         die();
       }
@@ -1006,6 +1166,8 @@ function die() {
   if(player.dead) return;
 
   player.dead = true;
+  player.invincible = false;
+  player.invincibleTimer = 0;
   player.vy = JUMP_FORCE;
   const finalScore = gameState.score;
 
@@ -1015,8 +1177,8 @@ function die() {
     startScreenEl.style.display = 'flex';
     gameState.score = 0;
     gameState.distance = 0;
-    document.getElementById('score').innerText = 'SCORE: 0';
-    document.getElementById('dist').innerText = '0';
+    scoreEl.innerText = 'SCORE: 0';
+    distEl.innerText = '0';
   }, 1500);
 }
 
