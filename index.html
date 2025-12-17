@@ -905,6 +905,7 @@ function updatePhysics() {
   }
 
   player.vy += GRAVITY;
+  const prevX = player.x;
   player.x += player.vx;
   player.y += player.vy;
 
@@ -945,19 +946,24 @@ function updatePhysics() {
   const br = getTile(player.x + player.w, player.y + player.h - 5);
 
   const checkHit = (tile) => {
-    if (level.isSolid(tile.x, tile.y)) {
-      if (!level.map[tile.x]) return true; // 安全策
-      const type = level.map[tile.x][tile.y];
+    if (!level.isSolid(tile.x, tile.y)) return false;
+    const column = level.map[tile.x];
+    if (!column) return false;
+    const type = column[tile.y];
 
-      if (type === 2) {
-        level.map[tile.x][tile.y] = 0;
-        gameState.score += 50;
-        document.getElementById('score').innerText = `SCORE: ${gameState.score}`;
-        return false;
-      }
-      return true;
+    if (type === 2) {
+      column[tile.y] = 0;
+      gameState.score += 50;
+      document.getElementById('score').innerText = `SCORE: ${gameState.score}`;
+      return false;
     }
-    return false;
+
+    if (type === 1 || type === 3) {
+      player.x = prevX;
+      return false;
+    }
+
+    return true;
   };
 
   const hitTop = checkHit(tr);
