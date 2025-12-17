@@ -1038,11 +1038,15 @@ function updatePhysics() {
     }
   });
 
-  if (player.invincibleTimer > 0) {
+  if (player.invincible) {
     player.invincibleTimer--;
     if (player.invincibleTimer <= 0) {
       player.invincibleTimer = 0;
       player.invincible = false;
+      if (player.y > view.h + 100) {
+        die();
+        return;
+      }
     }
   }
 
