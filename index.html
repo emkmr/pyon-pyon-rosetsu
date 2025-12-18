@@ -211,7 +211,8 @@ canvas {
 .overlay-dog {
   width: 78px;
   height: 78px;
-  background: url('assets/pyon-pyon-rosetsu:assets:img:ui_reference_02.png') center/contain no-repeat;
+  background: #ffd9e6 url('assets/pyon-pyon-rosetsu:assets:img:ui_reference_02.png') center/contain no-repeat;
+  border-radius: 16px;
   filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
 }
 
@@ -219,6 +220,20 @@ canvas {
   font-size: 32px;
   margin: 0;
   color: #2e2e2e;
+}
+
+.overlay-subhead {
+  font-size: 16px;
+  margin: 6px 0 0;
+  color: rgba(34,34,34,0.7);
+}
+
+.overlay-subhead img {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  margin-right: 6px;
+  border-radius: 50%;
 }
 
 .overlay-score-panel {
@@ -315,6 +330,7 @@ canvas {
         </div>
       </div>
       <h1 class="overlay-message" id="overlay-message"></h1>
+      <p class="overlay-subhead" id="overlay-subhead"></p>
 
       <div class="overlay-score-panel" id="overlay-score-panel">
         <span class="overlay-star">♡</span>
@@ -345,6 +361,7 @@ const overlayVideo = document.getElementById('overlay-video');
 const overlayScorePanel = document.getElementById('overlay-score-panel');
 const overlayScoreValue = document.getElementById('overlay-score-value');
 const overlaySubtextEl = document.getElementById('overlay-subtext');
+const overlaySubheadEl = document.getElementById('overlay-subhead');
 const startBtn = document.getElementById('start-btn');
 const soundBtn = document.getElementById('sound-btn');
 const scoreEl = document.getElementById('score');
@@ -636,6 +653,27 @@ function drawBlock(ctx, x, y, type) {
     ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
     ctx.fillStyle = COLORS.pipeDark;
     ctx.fillRect(x + TILE_SIZE*0.1, y, TILE_SIZE*0.2, TILE_SIZE);
+  } else if (type === 4) { // Skull hazard
+    ctx.save();
+    ctx.translate(x + TILE_SIZE * 0.5, y + TILE_SIZE * 0.5);
+    const skullSize = TILE_SIZE * 0.5;
+    ctx.fillStyle = '#2b1c34';
+    ctx.beginPath();
+    ctx.arc(0, 0, skullSize * 0.6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#f4f4f4';
+    ctx.beginPath();
+    ctx.arc(0, 0, skullSize * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#2b1c34';
+    ctx.beginPath();
+    ctx.arc(-skullSize * 0.2, -skullSize * 0.05, skullSize * 0.18, 0, Math.PI * 2);
+    ctx.arc(skullSize * 0.2, -skullSize * 0.05, skullSize * 0.18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(-skullSize * 0.2, skullSize * 0.25, skullSize * 0.12, skullSize * 0.25);
+    ctx.fillRect(-skullSize * 0.02, skullSize * 0.25, skullSize * 0.12, skullSize * 0.25);
+    ctx.fillRect(skullSize * 0.16, skullSize * 0.25, skullSize * 0.12, skullSize * 0.25);
+    ctx.restore();
   }
 }
 
@@ -869,6 +907,10 @@ class Level {
       this.map[x][groundY-4] = 2;
     }
 
+    if (Math.random() < 0.03) {
+      this.map[x][groundY-2] = 4;
+    }
+
     // 敵
     if (Math.random() < 0.03) {
       this.enemies.push({
@@ -957,6 +999,8 @@ function setOverlayState(state, scoreValue = 0) {
     }
     overlayMessageEl.innerText = '';
     overlayMessageEl.style.display = 'none';
+    overlaySubheadEl.innerHTML = '';
+    overlaySubheadEl.style.display = 'none';
     overlaySubtextEl.innerText = '';
     overlaySubtextEl.style.display = 'none';
     overlayScorePanel.classList.remove('visible');
@@ -970,8 +1014,10 @@ function setOverlayState(state, scoreValue = 0) {
     }
     openingMusic.pause();
     if (soundBtn) soundBtn.style.display = 'none';
-    overlayMessageEl.innerText = 'クゥ〜ン、、、';
+    overlayMessageEl.innerText = 'GAME OVER';
     overlayMessageEl.style.display = 'block';
+    overlaySubheadEl.innerHTML = `<img src="assets/pyon-pyon-rosetsu:assets:img:ui_reference_02.png" alt="dog face">クゥ〜ン、、`;
+    overlaySubheadEl.style.display = 'block';
     overlaySubtextEl.innerText = '';
     overlaySubtextEl.style.display = 'none';
     overlayScoreValue.innerText = scoreValue;
@@ -1072,12 +1118,24 @@ function updatePhysics() {
     return false;
   };
 
+  const checkSkullAt = (tile) => {
+    const column = level.map[tile.x];
+    if (!column) return false;
+    if (column[tile.y] === 4) {
+      column[tile.y] = 0;
+      die();
+      return true;
+    }
+    return false;
+  };
+
   // 接地判定
   if (player.vy >= 0) {
     const bl = getTile(player.x + 5, player.y + player.h);
     const br = getTile(player.x + player.w - 5, player.y + player.h);
 
     if (level.isSolid(bl.x, bl.y) || level.isSolid(br.x, br.y)) {
+      if (checkSkullAt(bl) || checkSkullAt(br)) return;
       let collected = false;
       if (collectSushiAt(bl)) collected = true;
       if (collectSushiAt(br)) collected = true;
@@ -1096,6 +1154,7 @@ function updatePhysics() {
     const tl = getTile(player.x + 5, player.y);
     const tr = getTile(player.x + player.w - 5, player.y);
     if (level.isSolid(tl.x, tl.y) || level.isSolid(tr.x, tr.y)) {
+      if (checkSkullAt(tl) || checkSkullAt(tr)) return;
       let collected = false;
       if (collectSushiAt(tl)) collected = true;
       if (collectSushiAt(tr)) collected = true;
@@ -1113,6 +1172,7 @@ function updatePhysics() {
 
   const checkHit = (tile) => {
     if (!level.isSolid(tile.x, tile.y)) return false;
+    if (checkSkullAt(tile)) return true;
     if (collectSushiAt(tile)) return false;
     const column = level.map[tile.x];
     if (!column) return false;
