@@ -1060,25 +1060,50 @@ function updatePhysics() {
     y: Math.floor(py / TILE_SIZE)
   });
 
+  const collectSushiAt = (tile) => {
+    const column = level.map[tile.x];
+    if (!column) return false;
+    if (column[tile.y] === 2) {
+      column[tile.y] = 0;
+      gameState.score += 50;
+      scoreEl.innerText = `SCORE: ${gameState.score}`;
+      return true;
+    }
+    return false;
+  };
+
   // 接地判定
   if (player.vy >= 0) {
     const bl = getTile(player.x + 5, player.y + player.h);
     const br = getTile(player.x + player.w - 5, player.y + player.h);
 
     if (level.isSolid(bl.x, bl.y) || level.isSolid(br.x, br.y)) {
-      const blockTop = bl.y * TILE_SIZE;
-      if (player.y + player.h <= blockTop + player.vy + TILE_SIZE/2) {
-        player.y = blockTop - player.h;
-        player.vy = 0;
-        player.grounded = true;
+      let collected = false;
+      if (collectSushiAt(bl)) collected = true;
+      if (collectSushiAt(br)) collected = true;
+
+      if (!collected && (level.isSolid(bl.x, bl.y) || level.isSolid(br.x, br.y))) {
+        const groundTile = level.isSolid(bl.x, bl.y) ? bl : br;
+        const blockTop = groundTile.y * TILE_SIZE;
+        if (player.y + player.h <= blockTop + player.vy + TILE_SIZE/2) {
+          player.y = blockTop - player.h;
+          player.vy = 0;
+          player.grounded = true;
+        }
       }
     }
   } else {
     const tl = getTile(player.x + 5, player.y);
     const tr = getTile(player.x + player.w - 5, player.y);
     if (level.isSolid(tl.x, tl.y) || level.isSolid(tr.x, tr.y)) {
-      player.y = (tl.y + 1) * TILE_SIZE;
-      player.vy = 0;
+      let collected = false;
+      if (collectSushiAt(tl)) collected = true;
+      if (collectSushiAt(tr)) collected = true;
+
+      if (!collected && (level.isSolid(tl.x, tl.y) || level.isSolid(tr.x, tr.y))) {
+        player.y = (tl.y + 1) * TILE_SIZE;
+        player.vy = 0;
+      }
     }
   }
 
@@ -1088,16 +1113,10 @@ function updatePhysics() {
 
   const checkHit = (tile) => {
     if (!level.isSolid(tile.x, tile.y)) return false;
+    if (collectSushiAt(tile)) return false;
     const column = level.map[tile.x];
     if (!column) return false;
     const type = column[tile.y];
-
-    if (type === 2) {
-      column[tile.y] = 0;
-      gameState.score += 50;
-      scoreEl.innerText = `SCORE: ${gameState.score}`;
-      return false;
-    }
 
     if (type === 1 || type === 3) {
       player.x = prevX;
