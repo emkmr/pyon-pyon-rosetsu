@@ -316,7 +316,7 @@ canvas {
     <div class="overlay-card">
       <p class="overlay-caption">🍓ぴょんぴょんロセツ🍓</p>
       <div class="overlay-video" id="overlay-video">
-        <video src="assets/pyon-pyon-rosetsu:assets:img:ui_reference_04.mov" preload="auto" autoplay loop muted playsinline webkit-playsinline></video>
+        <video src="assets/pyon-pyon-rosetsu:assets:img:ui_reference_04.mov" preload="metadata" loop muted playsinline webkit-playsinline></video>
       </div>
       <div class="overlay-scene" id="overlay-scene">
         <div class="overlay-scene-sky">
@@ -388,6 +388,26 @@ if (overlayVideoEl) {
       overlayVideoEl.play().catch(() => {});
     }
   });
+
+  const startVideoPlayback = () => {
+    if (overlayVideoEl.dataset.playRequested) return;
+    overlayVideoEl.dataset.playRequested = 'true';
+    const tryPlay = () => overlayVideoEl.play().catch(() => {});
+
+    if (overlayVideoEl.readyState >= 2) {
+      tryPlay();
+      return;
+    }
+
+    overlayVideoEl.addEventListener('loadeddata', tryPlay, { once: true });
+    overlayVideoEl.load();
+  };
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(startVideoPlayback, { timeout: 700 });
+  } else {
+    window.setTimeout(startVideoPlayback, 500);
+  }
 }
 
 const COLORS = {
