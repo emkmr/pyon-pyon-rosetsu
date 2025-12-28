@@ -155,7 +155,7 @@ canvas {
   width: min(320px, calc(100% - 40px));
   aspect-ratio: 16 / 9;
   margin: 0 auto 20px;
-  background: #1f1b1a;
+  background: #8cc0f4;
   border-radius: 24px;
   overflow: hidden;
   border: 3px solid #1f1b1a;
@@ -169,6 +169,12 @@ canvas {
   object-fit: cover;
   width: 100%;
   height: 100%;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.overlay-video video.is-ready {
+  opacity: 1;
 }
 
 .overlay-scene-sky {
@@ -310,7 +316,7 @@ canvas {
     <div class="overlay-card">
       <p class="overlay-caption">🍓ぴょんぴょんロセツ🍓</p>
       <div class="overlay-video" id="overlay-video">
-        <video src="assets/pyon-pyon-rosetsu:assets:img:ui_reference_03.MOV" poster="assets/pyon-pyon-rosetsu:assets:img:ui_reference_03.png" preload="auto" autoplay loop muted playsinline></video>
+        <video src="assets/pyon-pyon-rosetsu:assets:img:ui_reference_04.mov" preload="auto" autoplay loop muted playsinline webkit-playsinline></video>
       </div>
       <div class="overlay-scene" id="overlay-scene">
         <div class="overlay-scene-sky">
@@ -358,6 +364,7 @@ const startScreenEl = document.getElementById('start-screen');
 const overlayMessageEl = document.getElementById('overlay-message');
 const overlayScene = document.getElementById('overlay-scene');
 const overlayVideo = document.getElementById('overlay-video');
+const overlayVideoEl = overlayVideo ? overlayVideo.querySelector('video') : null;
 const overlayScorePanel = document.getElementById('overlay-score-panel');
 const overlayScoreValue = document.getElementById('overlay-score-value');
 const overlaySubtextEl = document.getElementById('overlay-subtext');
@@ -369,6 +376,19 @@ const distEl = document.getElementById('dist');
 const openingMusic = new Audio('assets/opening-music.mp3');
 openingMusic.loop = true;
 let musicUnlocked = false;
+
+if (overlayVideoEl) {
+  const markVideoReady = () => overlayVideoEl.classList.add('is-ready');
+  overlayVideoEl.addEventListener('canplay', markVideoReady, { once: true });
+  overlayVideoEl.addEventListener('loadeddata', markVideoReady, { once: true });
+  overlayVideoEl.addEventListener('timeupdate', () => {
+    if (!overlayVideoEl.duration || !Number.isFinite(overlayVideoEl.duration)) return;
+    if (overlayVideoEl.currentTime >= overlayVideoEl.duration - 0.05) {
+      overlayVideoEl.currentTime = 0.01;
+      overlayVideoEl.play().catch(() => {});
+    }
+  });
+}
 
 const COLORS = {
   sky: '#FFD9E6',
