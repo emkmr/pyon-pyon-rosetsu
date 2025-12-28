@@ -874,7 +874,7 @@ class Level {
     }
 
     // 新しい穴の生成判定
-    if (this.gapRemaining <= 0 && Math.random() < 0.1) {
+    if (this.gapRemaining <= 0 && Math.random() < 0.0) {
       const gapWidth = Math.floor(Math.random() * 2) + 2; // 2~3マス
       this.gapRemaining = gapWidth;
       this.gapCooldown = gapWidth + 5; // ジャンプ後着地スペース確保
