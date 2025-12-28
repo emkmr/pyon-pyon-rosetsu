@@ -160,6 +160,12 @@ canvas {
   overflow: hidden;
   border: 3px solid #1f1b1a;
   box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.overlay-video.is-ready {
+  opacity: 1;
 }
 
 .overlay-video video {
@@ -378,7 +384,10 @@ openingMusic.loop = true;
 let musicUnlocked = false;
 
 if (overlayVideoEl) {
-  const markVideoReady = () => overlayVideoEl.classList.add('is-ready');
+  const markVideoReady = () => {
+    overlayVideoEl.classList.add('is-ready');
+    overlayVideo.classList.add('is-ready');
+  };
   overlayVideoEl.addEventListener('canplay', markVideoReady, { once: true });
   overlayVideoEl.addEventListener('loadeddata', markVideoReady, { once: true });
   overlayVideoEl.addEventListener('timeupdate', () => {
