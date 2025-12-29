@@ -430,6 +430,9 @@ const COLORS = {
 };
 
 const INVINCIBLE_DURATION_FRAMES = 60 * 5;
+const RABBIT_SPAWN_CHANCE = 0.1;
+const RABBIT_EMERGE_FRAMES = 18;
+const BIG_BANG_DURATION_FRAMES = 90;
 
 // ★ マップの縦マス数（y=0..14 と一致）
 const ROWS = 15;
@@ -451,6 +454,7 @@ let gameState = {
 };
 
 let jumpPressed = false;
+let bigBangTimer = 0;
 
 /**
  * Resize Logic
@@ -793,6 +797,114 @@ function drawBoo(ctx, x, y) {
   ctx.restore();
 }
 
+function drawRabbit(ctx, x, y, frame) {
+  const w = TILE_SIZE;
+  const h = TILE_SIZE;
+  const centerX = x + w / 2;
+  const bottomY = y + h;
+
+  ctx.save();
+  ctx.translate(centerX, bottomY);
+  ctx.scale(-1, 1);
+
+  const runFrame = Math.floor(frame / 4) % 4;
+  const jumpOffset = 0;
+  const s = TILE_SIZE * 0.04;
+
+  let legFL = 0, legFR = 0, legBL = 0, legBR = 0;
+  if (runFrame === 0) { legFL=0; legFR=0; legBL=0; legBR=0; }
+  else if (runFrame === 1) { legFL=-2*s; legFR=2*s; legBL=2*s; legBR=-2*s; }
+  else if (runFrame === 2) { legFL=0; legFR=0; legBL=0; legBR=0; }
+  else { legFL=2*s; legFR=-2*s; legBL=-2*s; legBR=2*s; }
+
+  // --- しっぽ (丸くて小さい) ---
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  const tailBaseX = -10*s;
+  const tailBaseY = -8*s + jumpOffset;
+  ctx.arc(tailBaseX, tailBaseY, 3.5*s, 0, Math.PI*2);
+  ctx.fill();
+
+  // --- 奥の足 ---
+  ctx.fillStyle = '#E0E0E0';
+  ctx.fillRect(-8*s + legBL, -6*s + jumpOffset, 3*s, 6*s);
+  ctx.fillRect(4*s + legFL, -6*s + jumpOffset, 3*s, 6*s);
+
+  // --- 胴体 (黄色いセーター) ---
+  ctx.fillStyle = '#FFF176';
+  ctx.beginPath();
+  if (ctx.roundRect) {
+    ctx.roundRect(-10*s, -16*s + jumpOffset, 20*s, 12*s, 4*s);
+  } else {
+    ctx.rect(-10*s, -16*s + jumpOffset, 20*s, 12*s);
+  }
+  ctx.fill();
+
+  // 胴体の模様 (オレンジのボーダー)
+  ctx.fillStyle = '#FFB74D';
+  ctx.fillRect(-9*s, -13*s + jumpOffset, 18*s, 3*s);
+
+  // 首のリブ (濃い黄色)
+  ctx.fillStyle = '#FBC02D';
+  ctx.fillRect(4*s, -16*s + jumpOffset, 4*s, 8*s);
+
+  // --- 手前の足 ---
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(-10*s + legBR, -6*s + jumpOffset, 3*s, 6*s);
+  ctx.fillRect(6*s + legFR, -6*s + jumpOffset, 3*s, 6*s);
+
+  // --- 頭部 ---
+  const headX = 6*s;
+  const headY = -20*s + jumpOffset;
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(headX - 2*s, headY - 8*s, 2.5*s, 8*s, -0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFC0CB';
+  ctx.beginPath();
+  ctx.ellipse(headX - 2*s, headY - 8*s, 1.2*s, 6*s, -0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(headX + 3*s, headY - 8*s, 2.5*s, 8*s, 0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFC0CB';
+  ctx.beginPath();
+  ctx.ellipse(headX + 3*s, headY - 8*s, 1.2*s, 6*s, 0.2, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.ellipse(headX, headY, 7.5*s, 7*s, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#000000';
+  ctx.beginPath();
+  ctx.arc(headX + 3*s, headY - 1*s, 1.8*s, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.beginPath();
+  ctx.arc(headX + 3.5*s, headY - 1.5*s, 0.6*s, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = '#FFAB91';
+  ctx.beginPath();
+  ctx.arc(headX + 7*s, headY + 1*s, 1*s, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(255, 182, 193, 0.5)';
+  ctx.beginPath();
+  ctx.arc(headX + 4*s, headY + 2.5*s, 2*s, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawEnemy(ctx, x, y, frame) {
   const w = TILE_SIZE;
   const h = TILE_SIZE;
@@ -918,6 +1030,42 @@ function drawBackground(ctx) {
   }
 }
 
+function drawBigBangEffect(ctx, t) {
+  const progress = 1 - t;
+  const cx = view.w * 0.5;
+  const cy = view.h * 0.5;
+  const maxR = Math.max(view.w, view.h) * (0.5 + progress * 1.6);
+  const fade = Math.min(1, t);
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+
+  const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.6);
+  core.addColorStop(0, `rgba(255,255,255,${1.0 * fade})`);
+  core.addColorStop(0.35, `rgba(255,245,210,${0.9 * fade})`);
+  core.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = core;
+  ctx.fillRect(0, 0, view.w, view.h);
+
+  const halo = ctx.createRadialGradient(cx, cy, maxR * 0.2, cx, cy, maxR);
+  halo.addColorStop(0, `rgba(255,255,255,${0.6 * fade})`);
+  halo.addColorStop(0.7, `rgba(200,240,255,${0.35 * fade})`);
+  halo.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(0, 0, view.w, view.h);
+
+  const ringR = maxR * (0.3 + progress * 0.6);
+  ctx.strokeStyle = `rgba(255,255,255,${0.7 * fade})`;
+  ctx.lineWidth = Math.max(2, view.w * 0.01);
+  ctx.beginPath();
+  ctx.arc(cx, cy, ringR, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.fillStyle = `rgba(255,255,255,${0.45 * fade})`;
+  ctx.fillRect(0, 0, view.w, view.h);
+  ctx.restore();
+}
+
 /**
  * Game Logic
  */
@@ -932,6 +1080,7 @@ class Level {
     this.gapCooldown = 0;
     this.gapRemaining = 0;
     this.avoidPipeNext = 0;
+    this.rabbitSpawned = new Set();
 
     // 初回生成範囲を広く取る（画面幅の3倍）
     this.updateMap(view.w * 3);
@@ -951,6 +1100,9 @@ class Level {
     const deleteThreshold = Math.floor((gameState.cameraX - view.w) / TILE_SIZE);
     this.enemies = this.enemies.filter(e => e.x > gameState.cameraX - view.w);
     this.ebiFlies = this.ebiFlies.filter(e => !e.collected && e.x > gameState.cameraX - view.w * 1.2);
+    this.rabbitSpawned.forEach((colX) => {
+      if (colX < deleteThreshold) this.rabbitSpawned.delete(colX);
+    });
 
     // 古いマップデータの削除（軽量化）
     if (this.generatedX % 100 === 0) {
@@ -1091,7 +1243,11 @@ class Level {
 
     this.enemies.forEach(e => {
       if (e.active && e.x > gameState.cameraX - TILE_SIZE && e.x < gameState.cameraX + view.w) {
-        drawEnemy(ctx, e.x - gameState.cameraX, e.y, frame);
+        if (e.type === 'rabbit') {
+          drawRabbit(ctx, e.x - gameState.cameraX, e.y, frame);
+        } else {
+          drawEnemy(ctx, e.x - gameState.cameraX, e.y, frame);
+        }
       }
     });
 
@@ -1205,6 +1361,36 @@ function updatePhysics() {
   // マップ更新: 画面外も余裕を持って生成
   level.updateMap(player.x + view.w);
 
+  const spawnRabbitFromPipe = (colX, pipeY) => {
+    const rabbitY = pipeY * TILE_SIZE;
+    level.enemies.push({
+      x: colX * TILE_SIZE,
+      y: rabbitY,
+      baseY: rabbitY,
+      active: true,
+      type: 'rabbit',
+      emergeFrames: RABBIT_EMERGE_FRAMES,
+      emergeDuration: RABBIT_EMERGE_FRAMES,
+      vx: -MOVE_SPEED * 0.45
+    });
+  };
+
+  const startCol = Math.floor(gameState.cameraX / TILE_SIZE);
+  const endCol = startCol + Math.ceil(view.w / TILE_SIZE) + 1;
+  for (let x = startCol; x <= endCol; x++) {
+    if (level.rabbitSpawned.has(x)) continue;
+    const column = level.map[x];
+    if (!column) continue;
+    const pipeY = column.findIndex(tile => tile === 3);
+    if (pipeY === -1) continue;
+    const screenX = x * TILE_SIZE - gameState.cameraX;
+    if (screenX < 0 || screenX > view.w - TILE_SIZE * 0.5) continue;
+    level.rabbitSpawned.add(x);
+    if (Math.random() < RABBIT_SPAWN_CHANCE) {
+      spawnRabbitFromPipe(x, pipeY);
+    }
+  }
+
   player.vx = MOVE_SPEED;
 
   if (jumpPressed && player.grounded) {
@@ -1217,6 +1403,18 @@ function updatePhysics() {
   const prevX = player.x;
   player.x += player.vx;
   player.y += player.vy;
+
+  level.enemies.forEach(e => {
+    if (!e.active || e.type !== 'rabbit') return;
+    if (e.emergeFrames > 0) {
+      e.emergeFrames--;
+      const progress = 1 - e.emergeFrames / e.emergeDuration;
+      e.y = e.baseY + TILE_SIZE * 0.3 - progress * TILE_SIZE * 0.3;
+      return;
+    }
+    e.y = e.baseY;
+    e.x += e.vx;
+  });
 
   level.ebiFlies.forEach(ebi => {
     if (!ebi.collected) {
@@ -1418,6 +1616,11 @@ const handleSkullAt = (tile, allowStomp = false) => {
         player.x + player.w > e.x &&
         player.y < e.y + TILE_SIZE &&
         player.y + player.h > e.y) {
+      if (e.type === 'rabbit') {
+        e.active = false;
+        bigBangTimer = BIG_BANG_DURATION_FRAMES;
+        return;
+      }
 
       if (player.invincible) {
         e.active = false;
@@ -1464,6 +1667,10 @@ function gameLoop() {
   updatePhysics();
   level.draw(ctx, frameCount);
   drawPlayer(ctx, player.x - gameState.cameraX, player.y, frameCount);
+  if (bigBangTimer > 0) {
+    drawBigBangEffect(ctx, bigBangTimer / BIG_BANG_DURATION_FRAMES);
+    bigBangTimer--;
+  }
 
   frameCount++;
   animationId = requestAnimationFrame(gameLoop);
