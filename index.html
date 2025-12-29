@@ -587,26 +587,26 @@ function drawPlayer(ctx, x, y, frame) {
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
   ctx.moveTo(headX - 2*s, headY);
-  ctx.lineTo(headX - 4*s, headY - 8*s);
-  ctx.lineTo(headX + 2*s, headY - 1*s);
+  ctx.lineTo(headX - 6.5*s, headY - 13*s);
+  ctx.lineTo(headX + 2.8*s, headY - 2.4*s);
   ctx.fill();
 
   ctx.beginPath();
   ctx.moveTo(headX + 2*s, headY);
-  ctx.lineTo(headX + 6*s, headY - 8*s);
-  ctx.lineTo(headX + 4*s, headY);
+  ctx.lineTo(headX + 7*s, headY - 13*s);
+  ctx.lineTo(headX + 5.2*s, headY);
   ctx.fill();
 
   ctx.fillStyle = '#FFC0CB';
   ctx.beginPath();
   ctx.moveTo(headX - 2*s, headY - 1*s);
-  ctx.lineTo(headX - 3.5*s, headY - 6*s);
-  ctx.lineTo(headX + 1*s, headY - 2*s);
+  ctx.lineTo(headX - 5.2*s, headY - 10.5*s);
+  ctx.lineTo(headX + 1.8*s, headY - 2.8*s);
   ctx.fill();
   ctx.beginPath();
   ctx.moveTo(headX + 2.5*s, headY - 1*s);
-  ctx.lineTo(headX + 5.5*s, headY - 6*s);
-  ctx.lineTo(headX + 3.5*s, headY - 1*s);
+  ctx.lineTo(headX + 6*s, headY - 10.5*s);
+  ctx.lineTo(headX + 5*s, headY - 1*s);
   ctx.fill();
 
   ctx.fillStyle = '#FFFFFF';
@@ -628,7 +628,7 @@ function drawPlayer(ctx, x, y, frame) {
   ctx.arc(headX + 2.5*s, headY - 1.5*s, 0.6*s, 0, Math.PI*2);
   ctx.fill();
 
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = '#ff7aa2';
   ctx.beginPath();
   ctx.arc(headX + 7.5*s, headY + 0.5*s, 1*s, 0, Math.PI*2);
   ctx.fill();
