@@ -431,7 +431,7 @@ const COLORS = {
 };
 
 const INVINCIBLE_DURATION_FRAMES = 60 * 5;
-const RABBIT_SPAWN_CHANCE = 0.13;
+const RABBIT_SPAWN_CHANCE = 0.15;
 const RABBIT_EMERGE_FRAMES = 18;
 const BIG_BANG_DURATION_FRAMES = 90;
 
@@ -1301,7 +1301,7 @@ function updatePhysics() {
       type: 'rabbit',
       emergeFrames: RABBIT_EMERGE_FRAMES,
       emergeDuration: RABBIT_EMERGE_FRAMES,
-      vx: -MOVE_SPEED * 0.45
+      vx: -MOVE_SPEED * 0.3
     });
   };
 
