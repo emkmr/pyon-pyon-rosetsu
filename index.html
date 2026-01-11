@@ -431,7 +431,7 @@ const COLORS = {
 };
 
 const INVINCIBLE_DURATION_FRAMES = 60 * 5;
-const RABBIT_SPAWN_CHANCE = 0.1;
+const RABBIT_SPAWN_CHANCE = 0.13;
 const RABBIT_EMERGE_FRAMES = 18;
 const BIG_BANG_DURATION_FRAMES = 90;
 
@@ -799,110 +799,39 @@ function drawBoo(ctx, x, y) {
 }
 
 function drawRabbit(ctx, x, y, frame) {
-  const w = TILE_SIZE;
-  const h = TILE_SIZE;
-  const centerX = x + w / 2;
-  const bottomY = y + h;
-
+  const arcMin = 0.5;
   ctx.save();
-  ctx.translate(centerX, bottomY);
-  ctx.scale(-1, 1);
-
-  const runFrame = Math.floor(frame / 4) % 4;
-  const jumpOffset = 0;
-  const s = TILE_SIZE * 0.04;
-
-  let legFL = 0, legFR = 0, legBL = 0, legBR = 0;
-  if (runFrame === 0) { legFL=0; legFR=0; legBL=0; legBR=0; }
-  else if (runFrame === 1) { legFL=-2*s; legFR=2*s; legBL=2*s; legBR=-2*s; }
-  else if (runFrame === 2) { legFL=0; legFR=0; legBL=0; legBR=0; }
-  else { legFL=2*s; legFR=-2*s; legBL=-2*s; legBR=2*s; }
-
-  // --- しっぽ (丸くて小さい) ---
-  ctx.fillStyle = '#FFFFFF';
+  ctx.translate(x + TILE_SIZE / 2, y + TILE_SIZE / 2);
+  const p = { size: TILE_SIZE };
+  ctx.fillStyle = '#f5deb3';
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  const tailBaseX = -10*s;
-  const tailBaseY = -8*s + jumpOffset;
-  ctx.arc(tailBaseX, tailBaseY, 3.5*s, 0, Math.PI*2);
+  ctx.ellipse(0, p.size * 0.25, p.size * 0.5, p.size * 0.3, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  // --- 奥の足 ---
-  ctx.fillStyle = '#E0E0E0';
-  ctx.fillRect(-8*s + legBL, -6*s + jumpOffset, 3*s, 6*s);
-  ctx.fillRect(4*s + legFL, -6*s + jumpOffset, 3*s, 6*s);
-
-  // --- 胴体 (黄色いセーター) ---
-  ctx.fillStyle = '#FFF176';
+  ctx.stroke();
   ctx.beginPath();
-  if (ctx.roundRect) {
-    ctx.roundRect(-10*s, -16*s + jumpOffset, 20*s, 12*s, 4*s);
-  } else {
-    ctx.rect(-10*s, -16*s + jumpOffset, 20*s, 12*s);
-  }
+  ctx.ellipse(0, -p.size * 0.1, p.size * 0.4, p.size * 0.28, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  // 胴体の模様 (オレンジのボーダー)
-  ctx.fillStyle = '#FFB74D';
-  ctx.fillRect(-9*s, -13*s + jumpOffset, 18*s, 3*s);
-
-  // 首のリブ (濃い黄色)
-  ctx.fillStyle = '#FBC02D';
-  ctx.fillRect(4*s, -16*s + jumpOffset, 4*s, 8*s);
-
-  // --- 手前の足 ---
-  ctx.fillStyle = '#FFFFFF';
-  ctx.fillRect(-10*s + legBR, -6*s + jumpOffset, 3*s, 6*s);
-  ctx.fillRect(6*s + legFR, -6*s + jumpOffset, 3*s, 6*s);
-
-  // --- 頭部 ---
-  const headX = 6*s;
-  const headY = -20*s + jumpOffset;
-
-  ctx.fillStyle = '#FFFFFF';
+  ctx.stroke();
   ctx.beginPath();
-  ctx.ellipse(headX - 2*s, headY - 8*s, 2.5*s, 8*s, -0.2, 0, Math.PI*2);
+  ctx.ellipse(-p.size * 0.35, -p.size * 0.1, p.size * 0.16, p.size * 0.14, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = '#FFC0CB';
+  ctx.stroke();
   ctx.beginPath();
-  ctx.ellipse(headX - 2*s, headY - 8*s, 1.2*s, 6*s, -0.2, 0, Math.PI*2);
+  ctx.ellipse(p.size * 0.35, -p.size * 0.1, p.size * 0.16, p.size * 0.14, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = '#FFFFFF';
+  ctx.stroke();
+  ctx.fillStyle = '#3d3532';
   ctx.beginPath();
-  ctx.ellipse(headX + 3*s, headY - 8*s, 2.5*s, 8*s, 0.2, 0, Math.PI*2);
+  ctx.ellipse(0, 0, p.size * 0.25, p.size * 0.1, 0, 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = '#FFC0CB';
+  ctx.fillStyle = 'black';
   ctx.beginPath();
-  ctx.ellipse(headX + 3*s, headY - 8*s, 1.2*s, 6*s, 0.2, 0, Math.PI*2);
+  ctx.arc(-p.size * 0.15, -p.size * 0.12, Math.max(arcMin, p.size * 0.05), 0, Math.PI * 2);
+  ctx.arc(p.size * 0.15, -p.size * 0.12, Math.max(arcMin, p.size * 0.05), 0, Math.PI * 2);
+  ctx.arc(0, p.size * 0.02, Math.max(arcMin, p.size * 0.04), 0, Math.PI * 2);
   ctx.fill();
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.ellipse(headX, headY, 7.5*s, 7*s, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle = '#000000';
-  ctx.beginPath();
-  ctx.arc(headX + 3*s, headY - 1*s, 1.8*s, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.beginPath();
-  ctx.arc(headX + 3.5*s, headY - 1.5*s, 0.6*s, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFAB91';
-  ctx.beginPath();
-  ctx.arc(headX + 7*s, headY + 1*s, 1*s, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle = 'rgba(255, 182, 193, 0.5)';
-  ctx.beginPath();
-  ctx.arc(headX + 4*s, headY + 2.5*s, 2*s, 0, Math.PI*2);
-  ctx.fill();
-
   ctx.restore();
 }
 
@@ -1206,7 +1135,7 @@ class Level {
       });
     }
 
-    if (Math.random() < 0.015) {
+    if (Math.random() < 0.0075) {
       const ebx = x * TILE_SIZE + view.w + TILE_SIZE * 2;
       const eby = Math.max(2, groundY - 6) * TILE_SIZE;
       this.ebiFlies.push({
