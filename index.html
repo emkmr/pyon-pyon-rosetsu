@@ -431,9 +431,11 @@ const COLORS = {
 };
 
 const INVINCIBLE_DURATION_FRAMES = 60 * 5;
-const RABBIT_SPAWN_CHANCE = 0.15;
+const RABBIT_SPAWN_CHANCE = 0.225;
 const RABBIT_EMERGE_FRAMES = 18;
 const BIG_BANG_DURATION_FRAMES = 90;
+const BASEBALL_STORM_FRAMES = 90;
+const DOG_COOLDOWN_FRAMES = 60 * 30;
 
 // ★ マップの縦マス数（y=0..14 と一致）
 const ROWS = 15;
@@ -456,6 +458,8 @@ let gameState = {
 
 let jumpPressed = false;
 let bigBangTimer = 0;
+let baseballStorm = null;
+let dogSpawnCooldown = 0;
 
 /**
  * Resize Logic
@@ -743,13 +747,15 @@ function drawBlock(ctx, x, y, type) {
     ctx.save();
     ctx.translate(x + TILE_SIZE * 0.5, y + TILE_SIZE * 0.5);
     const skullSize = TILE_SIZE * 0.32;
-    ctx.strokeStyle = '#2b1c34';
-    ctx.lineWidth = TILE_SIZE * 0.045;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = TILE_SIZE * 0.165;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.beginPath();
-    ctx.moveTo(-skullSize * 1.2, skullSize * 1.2);
-    ctx.lineTo(skullSize * 1.2, -skullSize * 1.2);
-    ctx.moveTo(-skullSize * 1.2, -skullSize * 1.2);
-    ctx.lineTo(skullSize * 1.2, skullSize * 1.2);
+    ctx.moveTo(-skullSize * 1.05, skullSize * 1.05);
+    ctx.lineTo(skullSize * 1.05, -skullSize * 1.05);
+    ctx.moveTo(-skullSize * 1.05, -skullSize * 1.05);
+    ctx.lineTo(skullSize * 1.05, skullSize * 1.05);
     ctx.stroke();
     ctx.fillStyle = '#2b1c34';
     ctx.beginPath();
@@ -934,6 +940,56 @@ function drawEbiFly(ctx, x, y, frame) {
   ctx.stroke();
 
   ctx.restore();
+}
+
+function drawBaseball(ctx, x, y, r, spin) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(spin);
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#c73b3b';
+  ctx.lineWidth = Math.max(1, r * 0.18);
+  ctx.beginPath();
+  ctx.arc(-r * 0.3, 0, r * 0.85, -0.6, 0.6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(r * 0.3, 0, r * 0.85, Math.PI - 0.6, Math.PI + 0.6);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function triggerBaseballStorm() {
+  const count = Math.max(60, Math.min(160, Math.floor((view.w * view.h) / 7000)));
+  baseballStorm = { timer: BASEBALL_STORM_FRAMES, balls: [] };
+  for (let i = 0; i < count; i++) {
+    const r = TILE_SIZE * (0.14 + Math.random() * 0.18);
+    baseballStorm.balls.push({
+      x: Math.random() * view.w,
+      y: Math.random() * view.h,
+      r,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: (Math.random() - 0.5) * 1.2,
+      spin: Math.random() * Math.PI
+    });
+  }
+}
+
+function drawBaseballStorm(ctx) {
+  if (!baseballStorm) return;
+  baseballStorm.balls.forEach(ball => {
+    ball.x += ball.vx;
+    ball.y += ball.vy;
+    if (ball.x < -ball.r) ball.x = view.w + ball.r;
+    if (ball.x > view.w + ball.r) ball.x = -ball.r;
+    if (ball.y < -ball.r) ball.y = view.h + ball.r;
+    if (ball.y > view.h + ball.r) ball.y = -ball.r;
+    drawBaseball(ctx, ball.x, ball.y, ball.r, ball.spin);
+  });
+  baseballStorm.timer--;
+  if (baseballStorm.timer <= 0) baseballStorm = null;
 }
 
 function drawBackground(ctx) {
@@ -1258,6 +1314,8 @@ function init() {
   calculateConstants();
 
   openingMusic.pause();
+  baseballStorm = null;
+  dogSpawnCooldown = 0;
 
   player.w = TILE_SIZE * 1.3;
   player.h = TILE_SIZE * 1.1;
@@ -1290,6 +1348,7 @@ function updatePhysics() {
 
   // マップ更新: 画面外も余裕を持って生成
   level.updateMap(player.x + view.w);
+  if (dogSpawnCooldown > 0) dogSpawnCooldown--;
 
   const spawnRabbitFromPipe = (colX, pipeY) => {
     const rabbitY = pipeY * TILE_SIZE;
@@ -1309,6 +1368,7 @@ function updatePhysics() {
   const endCol = startCol + Math.ceil(view.w / TILE_SIZE) + 1;
   for (let x = startCol; x <= endCol; x++) {
     if (level.rabbitSpawned.has(x)) continue;
+    if (dogSpawnCooldown > 0) continue;
     const column = level.map[x];
     if (!column) continue;
     const pipeY = column.findIndex(tile => tile === 3);
@@ -1549,6 +1609,8 @@ const handleSkullAt = (tile, allowStomp = false) => {
       if (e.type === 'rabbit') {
         e.active = false;
         bigBangTimer = BIG_BANG_DURATION_FRAMES;
+        triggerBaseballStorm();
+        dogSpawnCooldown = DOG_COOLDOWN_FRAMES;
         return;
       }
 
@@ -1601,6 +1663,7 @@ function gameLoop() {
     drawBigBangEffect(ctx, bigBangTimer / BIG_BANG_DURATION_FRAMES);
     bigBangTimer--;
   }
+  drawBaseballStorm(ctx);
 
   frameCount++;
   animationId = requestAnimationFrame(gameLoop);
