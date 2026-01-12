@@ -284,27 +284,6 @@ canvas {
   margin-bottom: 20px;
 }
 
-.sound-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  border-radius: 999px;
-  border: 2px solid #1f1b1a;
-  background: #fff8dc;
-  color: #1f1b1a;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  font-family: inherit;
-  margin-bottom: 16px;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.sound-btn:active {
-  transform: scale(0.97);
-  box-shadow: inset 0 3px 6px rgba(0,0,0,0.15);
-}
 </style>
 </head>
 
@@ -355,7 +334,6 @@ canvas {
       </div>
 
       <p class="overlay-subtext" id="overlay-subtext"></p>
-      <button class="sound-btn" id="sound-btn">サウンドON</button>
       <button class="start-btn" id="start-btn">PLAY GAME</button>
     </div>
   </div>
@@ -377,12 +355,8 @@ const overlayScoreValue = document.getElementById('overlay-score-value');
 const overlaySubtextEl = document.getElementById('overlay-subtext');
 const overlaySubheadEl = document.getElementById('overlay-subhead');
 const startBtn = document.getElementById('start-btn');
-const soundBtn = document.getElementById('sound-btn');
 const scoreEl = document.getElementById('score');
 const distEl = document.getElementById('dist');
-const openingMusic = new Audio('assets/opening-music.mp3');
-openingMusic.loop = true;
-let musicUnlocked = false;
 
 if (overlayVideoEl) {
   const markVideoReady = () => {
@@ -1270,15 +1244,7 @@ function setOverlayState(state, scoreValue = 0) {
       const videoEl = overlayVideo.querySelector('video');
       if (videoEl && videoEl.paused) videoEl.play().catch(() => {});
     }
-    if (musicUnlocked) {
-      openingMusic.currentTime = 0;
-      openingMusic.play().catch(() => {});
-      if (soundBtn) soundBtn.style.display = 'none';
-    } else if (soundBtn) {
-      soundBtn.style.display = 'inline-flex';
-      openingMusic.pause();
-      openingMusic.currentTime = 0;
-    }
+    // opening sound removed
     overlayMessageEl.innerText = '';
     overlayMessageEl.style.display = 'none';
     overlaySubheadEl.innerHTML = '';
@@ -1294,8 +1260,7 @@ function setOverlayState(state, scoreValue = 0) {
       const videoEl = overlayVideo.querySelector('video');
       if (videoEl) videoEl.pause();
     }
-    openingMusic.pause();
-    if (soundBtn) soundBtn.style.display = 'none';
+    // opening sound removed
     overlayMessageEl.innerText = 'GAME OVER';
     overlayMessageEl.style.display = 'block';
     overlaySubheadEl.innerHTML = `<img src="assets/pyon-pyon-rosetsu:assets:img:ui_reference_02.png" alt="dog face">クゥ〜ン、、`;
@@ -1313,7 +1278,7 @@ function init() {
   resize();
   calculateConstants();
 
-  openingMusic.pause();
+  // opening sound removed
   baseballStorm = null;
   dogSpawnCooldown = 0;
 
@@ -1672,15 +1637,6 @@ function gameLoop() {
 // ボタンイベント: クリックとタッチ両方に対応
 startBtn.addEventListener('click', (e) => { e.preventDefault(); init(); });
 startBtn.addEventListener('touchstart', (e) => { e.preventDefault(); init(); });
-if (soundBtn) {
-  soundBtn.addEventListener('click', () => {
-    openingMusic.currentTime = 0;
-    openingMusic.play().then(() => {
-      musicUnlocked = true;
-      soundBtn.style.display = 'none';
-    }).catch(() => {});
-  });
-}
 setOverlayState('start');
 
 const container = document.getElementById('game-container');
