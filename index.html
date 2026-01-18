@@ -741,10 +741,10 @@ function drawBlock(ctx, x, y, type, tileX, tileY) {
     ctx.strokeRect(x + TILE_SIZE * 0.1, y + TILE_SIZE * 0.1, TILE_SIZE * 0.8, TILE_SIZE * 0.8);
   } else if (type === 8) { // Spring pad
     const cx = x + TILE_SIZE * 0.5;
-    const cy = y + TILE_SIZE * 0.58;
+    const cy = y + TILE_SIZE * 0.52;
     const padW = TILE_SIZE * 0.7;
     const padH = TILE_SIZE * 0.1;
-    const diamond = TILE_SIZE * 0.28;
+    const diamond = TILE_SIZE * 0.16;
 
     ctx.fillStyle = '#f5f5dc';
     ctx.fillRect(cx - padW / 2, y + TILE_SIZE * 0.15, padW, padH);
