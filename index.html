@@ -1416,8 +1416,15 @@ function updatePhysics() {
       e.y = e.baseY + TILE_SIZE * 0.3 - progress * TILE_SIZE * 0.3;
       return;
     }
-    e.y = e.baseY;
     e.x += e.vx;
+    const colX = Math.floor((e.x + TILE_SIZE * 0.5) / TILE_SIZE);
+    const column = level.map[colX];
+    if (column) {
+      const groundY = column.findIndex(tile => tile === 1);
+      if (groundY !== -1) {
+        e.y = (groundY - 1) * TILE_SIZE;
+      }
+    }
   });
 
   level.ebiFlies.forEach(ebi => {
