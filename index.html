@@ -411,6 +411,13 @@ const BIG_BANG_DURATION_FRAMES = 90;
 const BASEBALL_STORM_FRAMES = 90;
 const DOG_COOLDOWN_FRAMES = 60 * 30;
 const SPRING_JUMP_MULTIPLIER = 1.35;
+const SPRING_BOUNCE_FRAMES = 10;
+const SPRING_BOUNCE_SPEED = 1.8;
+const BOO_DRIFT_X = 0.12;
+const BOO_DRIFT_Y = 0.09;
+const STAR_POP_SPEED_X = 0.08;
+const STAR_POP_SPEED_Y = 0.18;
+const STAR_LIFETIME_FRAMES = 90;
 
 // ★ マップの縦マス数（y=0..14 と一致）
 const ROWS = 15;
@@ -812,6 +819,44 @@ function drawBoo(ctx, x, y) {
   ctx.restore();
 }
 
+function drawStar(ctx, x, y, age) {
+  const size = TILE_SIZE * 0.32;
+  const alpha = Math.max(0, 1 - age / STAR_LIFETIME_FRAMES);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(x, y);
+  ctx.rotate(-Math.PI / 2);
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI * 2 * i) / 10;
+    const radius = i % 2 === 0 ? size : size * 0.45;
+    const px = Math.cos(angle) * radius;
+    const py = Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#ffd77a';
+  ctx.fill();
+  ctx.strokeStyle = '#d0902d';
+  ctx.lineWidth = Math.max(1, TILE_SIZE * 0.035);
+  ctx.stroke();
+
+  ctx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const angle = (Math.PI * 2 * i) / 10;
+    const radius = i % 2 === 0 ? size * 0.6 : size * 0.27;
+    const px = Math.cos(angle) * radius;
+    const py = Math.sin(angle) * radius;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#fff2c4';
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawRabbit(ctx, x, y, frame) {
   const arcMin = 0.5;
   ctx.save();
@@ -1094,6 +1139,7 @@ class Level {
     this.enemies = [];
     this.ebiFlies = [];
     this.boos = [];
+    this.stars = [];
     this.generatedX = 0;
     this.groundY = 10;
     this.gapCooldown = 0;
@@ -1119,6 +1165,7 @@ class Level {
     const deleteThreshold = Math.floor((gameState.cameraX - view.w) / TILE_SIZE);
     this.enemies = this.enemies.filter(e => e.x > gameState.cameraX - view.w);
     this.ebiFlies = this.ebiFlies.filter(e => !e.collected && e.x > gameState.cameraX - view.w * 1.2);
+    this.stars = this.stars.filter(star => star.age < STAR_LIFETIME_FRAMES && star.x > gameState.cameraX - view.w);
     this.rabbitSpawned.forEach((colX) => {
       if (colX < deleteThreshold) this.rabbitSpawned.delete(colX);
     });
@@ -1260,6 +1307,12 @@ class Level {
       }
     }
 
+    this.stars.forEach(star => {
+      const screenX = star.x - gameState.cameraX;
+      if (screenX < -TILE_SIZE || screenX > view.w + TILE_SIZE) return;
+      drawStar(ctx, screenX, star.y, star.age);
+    });
+
     this.boos.forEach(boo => {
       const floatX = boo.baseX + Math.sin(boo.age * 0.2 + boo.phase) * TILE_SIZE * 0.3;
       const screenX = floatX - gameState.cameraX;
@@ -1295,7 +1348,7 @@ class Level {
 }
 
 let player = {
-  x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0, grounded: false, dead: false, invincible: false, invincibleTimer: 0
+  x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0, grounded: false, dead: false, invincible: false, invincibleTimer: 0, bounceTimer: 0
 };
 
 let level;
@@ -1357,6 +1410,7 @@ function init() {
   player.dead = false;
   player.invincible = false;
   player.invincibleTimer = 0;
+  player.bounceTimer = 0;
 
   level = new Level();
   gameState.score = 0;
@@ -1420,6 +1474,10 @@ function updatePhysics() {
   }
 
   player.vx = MOVE_SPEED;
+  if (player.bounceTimer > 0) {
+    player.vx = -MOVE_SPEED * SPRING_BOUNCE_SPEED;
+    player.bounceTimer--;
+  }
 
   if (jumpPressed && player.grounded) {
     player.vy = JUMP_FORCE;
@@ -1457,11 +1515,22 @@ function updatePhysics() {
     }
   });
 
+  if (level.stars.length) {
+    level.stars = level.stars.filter(star => {
+      star.age += 1;
+      star.x += TILE_SIZE * STAR_POP_SPEED_X;
+      star.y -= TILE_SIZE * STAR_POP_SPEED_Y;
+      return star.age < STAR_LIFETIME_FRAMES && star.y > -TILE_SIZE * 2;
+    });
+  }
+
   if (level.boos.length) {
     level.boos = level.boos.filter(boo => {
       boo.age += 1;
-      boo.y -= TILE_SIZE * 0.05;
-      return boo.y > -TILE_SIZE * 2;
+      boo.baseX += TILE_SIZE * BOO_DRIFT_X;
+      boo.y -= TILE_SIZE * BOO_DRIFT_Y;
+      const screenX = boo.baseX - gameState.cameraX;
+      return boo.y > -TILE_SIZE * 2 && screenX < view.w + TILE_SIZE * 2;
     });
   }
 
@@ -1517,6 +1586,11 @@ const handleQuestionBlockAt = (tile) => {
         });
       } else {
         column[aboveY] = 6;
+        level.stars.push({
+          x: tile.x * TILE_SIZE + TILE_SIZE * 0.5,
+          y: tile.y * TILE_SIZE + TILE_SIZE * 0.2,
+          age: 0
+        });
       }
     }
     gameState.score += 20;
@@ -1619,6 +1693,11 @@ const handleSpringAt = (tile) => {
 
     if (type === 1 || type === 3 || type === 5 || type === 7) {
       player.x = prevX;
+      return false;
+    }
+    if (type === 8) {
+      player.x = prevX;
+      player.bounceTimer = SPRING_BOUNCE_FRAMES;
       return false;
     }
 
