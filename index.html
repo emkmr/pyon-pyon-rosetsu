@@ -405,7 +405,7 @@ const COLORS = {
 };
 
 const INVINCIBLE_DURATION_FRAMES = 60 * 5;
-const RABBIT_SPAWN_CHANCE = 0.32;
+const RABBIT_SPAWN_CHANCE = 0.45;
 const RABBIT_EMERGE_FRAMES = 18;
 const BIG_BANG_DURATION_FRAMES = 90;
 const BASEBALL_STORM_FRAMES = 90;
@@ -1373,8 +1373,15 @@ function updatePhysics() {
 
   const startCol = Math.floor(gameState.cameraX / TILE_SIZE);
   const endCol = startCol + Math.ceil(view.w / TILE_SIZE) + 1;
+  const hasRabbitOnScreen = level.enemies.some(e =>
+    e.active &&
+    e.type === 'rabbit' &&
+    e.x > gameState.cameraX - TILE_SIZE &&
+    e.x < gameState.cameraX + view.w + TILE_SIZE
+  );
   for (let x = startCol; x <= endCol; x++) {
     if (level.rabbitSpawned.has(x)) continue;
+    if (hasRabbitOnScreen) continue;
     if (dogSpawnCooldown > 0) continue;
     const column = level.map[x];
     if (!column) continue;
