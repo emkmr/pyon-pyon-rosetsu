@@ -1297,7 +1297,7 @@ class Level {
     }
 
     // 敵
-    if (Math.random() < 0.04) {
+    if (Math.random() < 0.04 && this.map[x][groundY-1] === 0) {
       this.enemies.push({
         x: x * TILE_SIZE,
         y: (groundY - 1) * TILE_SIZE,
