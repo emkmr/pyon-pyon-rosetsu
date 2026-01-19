@@ -972,67 +972,63 @@ function getEbiFlyY(ebi) {
 }
 
 function drawEbiFly(ctx, x, y, frame) {
-  const bodyLen = TILE_SIZE * 1.15;
-  const bodyThick = TILE_SIZE * 0.38;
-  const tailWidth = TILE_SIZE * 0.35;
-  const tailHeight = TILE_SIZE * 0.32;
-  const pixel = TILE_SIZE * 0.08;
-  const wingFlap = Math.sin(frame * 0.4) * Math.PI / 32;
-
+  const scale = (TILE_SIZE * 2.5) / 100;
   ctx.save();
   ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  ctx.translate(-50, -50);
 
-  const drawWing = (offsetX, offsetY, flip) => {
-    ctx.save();
-    ctx.translate(offsetX, offsetY);
-    ctx.rotate(flip * (Math.PI / 3.2 + wingFlap));
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(flip * bodyLen * 0.3, -bodyThick * 0.45, flip * bodyLen * 0.4, -bodyThick * 0.1);
-    ctx.quadraticCurveTo(flip * bodyLen * 0.3, bodyThick * 0.3, 0, 0);
-    ctx.fill();
-    ctx.restore();
-  };
-  drawWing(0, -bodyThick * 0.45, -1);
-  drawWing(bodyLen * 0.1, -bodyThick * 0.4, 1);
-
-  ctx.fillStyle = '#f2a645';
-  ctx.strokeStyle = '#a05f22';
-  ctx.lineWidth = TILE_SIZE * 0.04;
+  // Tail (red)
+  ctx.fillStyle = '#ff6b6b';
   ctx.beginPath();
-  ctx.moveTo(-bodyLen * 0.5, -bodyThick * 0.5);
-  ctx.quadraticCurveTo(bodyLen * 0.2, -bodyThick * 0.6, bodyLen * 0.45, -bodyThick * 0.08);
-  ctx.quadraticCurveTo(bodyLen * 0.38, bodyThick * 0.4, -bodyLen * 0.45, bodyThick * 0.55);
-  ctx.quadraticCurveTo(-bodyLen * 0.55, bodyThick * 0.2, -bodyLen * 0.5, -bodyThick * 0.5);
+  ctx.moveTo(75, 50);
+  ctx.lineTo(88, 40);
+  ctx.quadraticCurveTo(92, 45, 88, 50);
+  ctx.quadraticCurveTo(92, 55, 88, 60);
   ctx.closePath();
   ctx.fill();
+
+  // Body (fried texture)
+  ctx.fillStyle = '#f39c12';
+  ctx.beginPath();
+  ctx.moveTo(75, 50);
+  ctx.quadraticCurveTo(72, 42, 68, 45);
+  ctx.quadraticCurveTo(64, 40, 60, 43);
+  ctx.quadraticCurveTo(56, 38, 52, 41);
+  ctx.quadraticCurveTo(48, 36, 44, 40);
+  ctx.quadraticCurveTo(40, 36, 36, 40);
+  ctx.quadraticCurveTo(32, 38, 28, 42);
+  ctx.quadraticCurveTo(24, 39, 20, 45);
+  ctx.quadraticCurveTo(15, 50, 20, 55);
+  ctx.quadraticCurveTo(24, 61, 28, 58);
+  ctx.quadraticCurveTo(32, 62, 36, 60);
+  ctx.quadraticCurveTo(40, 64, 44, 60);
+  ctx.quadraticCurveTo(48, 64, 52, 61);
+  ctx.quadraticCurveTo(56, 62, 60, 57);
+  ctx.quadraticCurveTo(64, 60, 68, 55);
+  ctx.quadraticCurveTo(72, 58, 75, 50);
+  ctx.closePath();
+  ctx.fill();
+
+  // Texture accents
+  ctx.strokeStyle = 'rgba(230,126,34,0.45)';
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(30, 48);
+  ctx.quadraticCurveTo(35, 45, 40, 48);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(50, 52);
+  ctx.quadraticCurveTo(55, 55, 60, 52);
   ctx.stroke();
 
-  ctx.fillStyle = '#f8c977';
-  for (let row = -2; row <= 2; row++) {
-    for (let col = -2; col <= 3; col++) {
-      if ((row + col) % 2 === 0) {
-        ctx.fillRect(-bodyLen * 0.35 + col * pixel * 0.9, row * pixel * 0.9, pixel, pixel);
-      }
-    }
-  }
-
-  ctx.fillStyle = '#c86a2d';
-  ctx.strokeStyle = '#7a3a14';
+  // Highlight
+  ctx.strokeStyle = 'rgba(255,234,167,0.7)';
+  ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(bodyLen * 0.45, -tailHeight * 0.3);
-  ctx.lineTo(bodyLen * 0.58, -tailHeight * 0.65);
-  ctx.lineTo(bodyLen * 0.62, -tailHeight * 0.15);
-  ctx.lineTo(bodyLen * 0.72, -tailHeight * 0.6);
-  ctx.lineTo(bodyLen * 0.78, -tailHeight * 0.15);
-  ctx.lineTo(bodyLen * 0.78, tailHeight * 0.15);
-  ctx.lineTo(bodyLen * 0.72, tailHeight * 0.6);
-  ctx.lineTo(bodyLen * 0.62, tailHeight * 0.15);
-  ctx.lineTo(bodyLen * 0.58, tailHeight * 0.65);
-  ctx.lineTo(bodyLen * 0.45, tailHeight * 0.3);
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(35, 42);
+  ctx.quadraticCurveTo(40, 40, 45, 42);
   ctx.stroke();
 
   ctx.restore();
@@ -1313,7 +1309,7 @@ class Level {
         baseY: eby,
         amplitude: 0,
         phase: 0,
-        speed: TILE_SIZE * (0.06 + Math.random() * 0.03),
+        speed: TILE_SIZE * (0.045 + Math.random() * 0.025),
         collected: false
       });
     }
